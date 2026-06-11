@@ -2722,17 +2722,29 @@
             try {
               if (d.id) {
                 d.id = parseInt(d.id);
-                var updatePayload = { 
-                  name: d.name,
-                  role: d.role,
-                  parent_user: d.parentUser
-                };
-                if (d.password) updatePayload.password = d.password;
-                
-                const { error } = await supabaseClient.from("users").update(camelToSnake(updatePayload)).eq("id", d.id);
-                if (error) throw error;
-                await addLog("edit_admin", "Edited user " + d.name);
-                toast("User updated");
+                if (supabaseClient) {
+                  var updatePayload = { 
+                    name: d.name,
+                    role: d.role,
+                    parent_user: d.parentUser
+                  };
+                  if (d.password) updatePayload.password = d.password;
+                  
+                  const { error } = await supabaseClient.from("users").update(camelToSnake(updatePayload)).eq("id", d.id);
+                  if (error) throw error;
+                  await addLog("edit_admin", "Edited user " + d.name);
+                  toast("User updated");
+                } else {
+                  var idx = rawUsers.findIndex(function(x) { return x.id === d.id; });
+                  if (idx !== -1) {
+                    rawUsers[idx].name = d.name;
+                    rawUsers[idx].role = d.role;
+                    rawUsers[idx].parentUser = d.parentUser;
+                    if (d.password) rawUsers[idx].password = d.password;
+                    await addLog("edit_admin", "Edited user " + d.name);
+                    toast("User updated (Offline)");
+                  }
+                }
               } else {
                 if (
                   rawUsers.find(function (x) {
@@ -2742,22 +2754,43 @@
                   toast("Username exists", "error");
                   return;
                 }
-                var newUser = {
-                  username: d.username,
-                  password: d.password,
-                  role: d.role,
-                  name: d.name,
-                  active: true,
-                  parent_user: d.parentUser,
-                  created_at: todayStr()
-                };
-                const { error } = await supabaseClient.from("users").insert(camelToSnake(newUser));
-                if (error) throw error;
-                await addLog("create_admin", "Created user " + d.name);
-                toast("User created");
+                
+                if (supabaseClient) {
+                  var newUser = {
+                    username: d.username,
+                    password: d.password,
+                    role: d.role,
+                    name: d.name,
+                    active: true,
+                    parent_user: d.parentUser,
+                    created_at: todayStr()
+                  };
+                  const { error } = await supabaseClient.from("users").insert(camelToSnake(newUser));
+                  if (error) throw error;
+                  await addLog("create_admin", "Created user " + d.name);
+                  toast("User created");
+                } else {
+                  var newUser = {
+                    id: nextId.user++,
+                    username: d.username,
+                    password: d.password,
+                    role: d.role,
+                    name: d.name,
+                    active: true,
+                    parentUser: d.parentUser,
+                    createdAt: todayStr()
+                  };
+                  rawUsers.push(newUser);
+                  await addLog("create_admin", "Created user " + d.name);
+                  toast("User created (Offline)");
+                }
               }
               closeM();
-              await loadDataFromSupabase();
+              if (supabaseClient) {
+                await loadDataFromSupabase();
+              } else {
+                applyDataVisibilityFilter();
+              }
               render();
             } catch (err) {
               console.error(err);
@@ -2784,14 +2817,20 @@
         }
 
         try {
-          const { error } = await supabaseClient.from("users").update({ active: !u.active }).eq("id", id);
-          if (error) throw error;
+          var newActive = !u.active;
+          if (supabaseClient) {
+            const { error } = await supabaseClient.from("users").update({ active: newActive }).eq("id", id);
+            if (error) throw error;
+            await loadDataFromSupabase();
+          } else {
+            u.active = newActive;
+            applyDataVisibilityFilter();
+          }
           await addLog(
-            !u.active ? "activate_admin" : "deactivate_admin",
-            (!u.active ? "Activated" : "Deactivated") + " user " + u.name,
+            newActive ? "activate_admin" : "deactivate_admin",
+            (newActive ? "Activated" : "Deactivated") + " user " + u.name,
           );
           toast("User status updated");
-          await loadDataFromSupabase();
           render();
         } catch (err) {
           console.error(err);
@@ -2828,12 +2867,16 @@
           }
 
           try {
-            const { error } = await supabaseClient.from("users").update({ password: p }).eq("id", id);
-            if (error) throw error;
+            if (supabaseClient) {
+              const { error } = await supabaseClient.from("users").update({ password: p }).eq("id", id);
+              if (error) throw error;
+              await loadDataFromSupabase();
+            } else {
+              u.password = p;
+            }
             await addLog("reset_password", "Reset password for " + u.name);
             toast("Password reset");
             closeM();
-            await loadDataFromSupabase();
             render();
           } catch (err) {
             console.error(err);
