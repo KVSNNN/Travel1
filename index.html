@@ -2559,7 +2559,7 @@
           if (currentUser.role === "supremeadmin") {
             canManage = true;
           } else if (currentUser.role === "superadmin") {
-            canManage = (u.parentUser === currentUser.username && u.role === "admin");
+            canManage = (u.parentUser === currentUser.username && u.role === "admin") || (u.username === currentUser.username);
           }
 
           h +=
@@ -2636,7 +2636,7 @@
             '<option value="supremeadmin"' + (u && u.role === 'supremeadmin' ? ' selected' : '') + '>Supreme Admin</option>' +
             '</select></div>';
         } else {
-          roleSelectHTML = '<input type="hidden" name="role" value="admin">';
+          roleSelectHTML = '<input type="hidden" name="role" value="' + (u ? u.role : "admin") + '">';
         }
 
         var activeSuperadmins = rawUsers.filter(function(sa) {
@@ -2655,7 +2655,7 @@
             }).join('') +
             '</select></div>';
         } else {
-          parentSelectHTML = '<input type="hidden" name="parentUser" value="' + currentUser.username + '">';
+          parentSelectHTML = '<input type="hidden" name="parentUser" value="' + (u ? (u.parentUser || '') : currentUser.username) + '">';
         }
 
         openM(
@@ -2858,7 +2858,7 @@
           if (currentUser.role === "supremeadmin") {
             canManage = true;
           } else if (currentUser.role === "superadmin") {
-            canManage = (u.parentUser === currentUser.username && u.role === "admin");
+            canManage = (u.parentUser === currentUser.username && u.role === "admin") || (u.username === currentUser.username);
           }
           
           if (!canManage) {
