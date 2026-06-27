@@ -3365,9 +3365,26 @@
           paymentRow(b, "supplier", 3, b && (b.supplierRate || b.totalAmountPayable), "", "") +
           '<div><label class="block text-xs font-semibold text-indigo-700 uppercase mb-1"><i class="fas fa-balance-scale mr-1 text-indigo-400"></i>Balance Amount required</label><input type="number" name="supplierBalanceAmount" step="1" readonly class="w-full border border-indigo-200 bg-indigo-100/70 text-indigo-800 rounded-lg px-3 py-2.5 text-sm font-semibold" value="0"></div></div>';
         html +=
-          '<div class="grid grid-cols-2 gap-4 mb-4 bg-red-50 -mx-1 px-1 py-3 rounded-lg border border-red-200"><div><label class="block text-xs font-semibold text-red-700 uppercase mb-1"><i class="fas fa-exclamation-circle mr-1 text-red-400"></i>Supplier Payment Due Date</label><input type="date" name="supplierPaymentDueDate" value="' +
+          '<div class="grid grid-cols-2 gap-4 mb-4 bg-red-50 -mx-1 px-1 py-3 rounded-lg border border-red-200">' +
+          '<div><label class="block text-xs font-semibold text-red-700 uppercase mb-1"><i class="fas fa-exclamation-circle mr-1 text-red-400"></i>Supplier Payment Due Date 1</label><input type="date" name="supplierPaymentDueDate" value="' +
           (b ? toInp(b.supplierPaymentDueDate || b.paymentDueDate) : "") +
-          '" class="w-full border-2 border-red-400 bg-red-50 text-red-900 rounded-lg px-3 py-2.5 text-sm font-semibold input-red transition-all" oninput="checkDueBlink()"></div><div><label class="block text-xs font-semibold text-pri-600/70 uppercase mb-1">Profit (\u20B9)</label><input type="number" name="profitDisplay" step="1" readonly class="w-full border border-cream-200 bg-green-50 rounded-lg px-3 py-2.5 text-sm font-semibold" value="0"></div></div>';
+          '" class="w-full border-2 border-red-400 bg-red-50 text-red-900 rounded-lg px-3 py-2.5 text-sm font-semibold input-red transition-all" oninput="checkDueBlink()"></div>' +
+          '<div><label class="block text-xs font-semibold text-red-700 uppercase mb-1">Amount Due 1 (\u20B9)</label><input type="number" name="supplierPaymentDueAmount" step="1" min="0" value="' +
+          (b && b.supplierPaymentDueAmount ? b.supplierPaymentDueAmount : "") +
+          '" class="w-full border border-cream-300 rounded-lg px-3 py-2.5 text-sm"></div>' +
+          '<div><label class="block text-xs font-semibold text-red-700 uppercase mb-1"><i class="fas fa-exclamation-circle mr-1 text-red-400"></i>Supplier Payment Due Date 2</label><input type="date" name="supplierPaymentDueDate2" value="' +
+          (b && b.supplierPaymentDueDate2 ? toInp(b.supplierPaymentDueDate2) : "") +
+          '" class="w-full border-2 border-red-400 bg-red-50 text-red-900 rounded-lg px-3 py-2.5 text-sm font-semibold input-red transition-all" oninput="checkDueBlink()"></div>' +
+          '<div><label class="block text-xs font-semibold text-red-700 uppercase mb-1">Amount Due 2 (\u20B9)</label><input type="number" name="supplierPaymentDueAmount2" step="1" min="0" value="' +
+          (b && b.supplierPaymentDueAmount2 ? b.supplierPaymentDueAmount2 : "") +
+          '" class="w-full border border-cream-300 rounded-lg px-3 py-2.5 text-sm"></div>' +
+          '<div><label class="block text-xs font-semibold text-red-700 uppercase mb-1"><i class="fas fa-exclamation-circle mr-1 text-red-400"></i>Supplier Payment Due Date 3</label><input type="date" name="supplierPaymentDueDate3" value="' +
+          (b && b.supplierPaymentDueDate3 ? toInp(b.supplierPaymentDueDate3) : "") +
+          '" class="w-full border-2 border-red-400 bg-red-50 text-red-900 rounded-lg px-3 py-2.5 text-sm font-semibold input-red transition-all" oninput="checkDueBlink()"></div>' +
+          '<div><label class="block text-xs font-semibold text-red-700 uppercase mb-1">Amount Due 3 (\u20B9)</label><input type="number" name="supplierPaymentDueAmount3" step="1" min="0" value="' +
+          (b && b.supplierPaymentDueAmount3 ? b.supplierPaymentDueAmount3 : "") +
+          '" class="w-full border border-cream-300 rounded-lg px-3 py-2.5 text-sm"></div>' +
+          '<div class="col-span-2"><label class="block text-xs font-semibold text-pri-600/70 uppercase mb-1">Profit (\u20B9)</label><input type="number" name="profitDisplay" step="1" readonly class="w-full border border-cream-200 bg-green-50 rounded-lg px-3 py-2.5 text-sm font-semibold" value="0"></div></div>';
         html +=
           '</div><div class="mt-4"><label class="block text-xs font-semibold text-pri-600/70 uppercase mb-1">Remarks</label><textarea name="remarks" rows="2" class="w-full border border-cream-300 rounded-lg px-3 py-2.5 text-sm resize-none">' +
           (b ? b.remarks || "" : "") +
@@ -3438,18 +3455,22 @@
         window.checkDueBlink = function () {
           var f = document.getElementById("bForm");
           if (!f) return;
-          var dStr = f.supplierPaymentDueDate.value;
-          if (!dStr) {
-            f.supplierPaymentDueDate.classList.remove("due-alert");
-            return;
-          }
-          var d = new Date(dStr);
-          var now = new Date();
-          now.setHours(0, 0, 0, 0);
-          var diff = (d - now) / (1000 * 60 * 60 * 24);
-          if (diff <= 2 && diff >= 0)
-            f.supplierPaymentDueDate.classList.add("due-alert");
-          else f.supplierPaymentDueDate.classList.remove("due-alert");
+          ["supplierPaymentDueDate", "supplierPaymentDueDate2", "supplierPaymentDueDate3"].forEach(function(fieldName) {
+            var inputEl = f[fieldName];
+            if (!inputEl) return;
+            var dStr = inputEl.value;
+            if (!dStr) {
+              inputEl.classList.remove("due-alert");
+              return;
+            }
+            var d = new Date(dStr);
+            var now = new Date();
+            now.setHours(0, 0, 0, 0);
+            var diff = (d - now) / (1000 * 60 * 60 * 24);
+            if (diff <= 2 && diff >= 0)
+              inputEl.classList.add("due-alert");
+            else inputEl.classList.remove("due-alert");
+          });
         };
         autoCalc();
         checkDueBlink();
@@ -3462,6 +3483,9 @@
         d.clientId = parseInt(d.clientId);
         d.customerRate = parseFloat(d.customerRate) || 0;
         d.supplierRate = parseFloat(d.supplierRate) || 0;
+        d.supplierPaymentDueAmount = parseFloat(d.supplierPaymentDueAmount) || 0;
+        d.supplierPaymentDueAmount2 = parseFloat(d.supplierPaymentDueAmount2) || 0;
+        d.supplierPaymentDueAmount3 = parseFloat(d.supplierPaymentDueAmount3) || 0;
         var customerPaidTotal = 0;
         var supplierPaidTotal = 0;
         [1, 2, 3].forEach(function (n) {
@@ -3483,6 +3507,8 @@
           "travelDate",
           "travelDateTo",
           "supplierPaymentDueDate",
+          "supplierPaymentDueDate2",
+          "supplierPaymentDueDate3",
           "customerPayment1Date",
           "customerPayment2Date",
           "customerPayment3Date",
